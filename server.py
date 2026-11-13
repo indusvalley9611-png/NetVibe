@@ -208,12 +208,13 @@ class LANChatServer:
     def serve_http(self, client_socket, path):
         """Serves UI files (HTML, CSS, JS) over raw TCP socket."""
         try:
-            if path == '/' or path == '/index.html':
-                file_path = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
-            elif path.startswith('/static/'):
-                rel_path = path[len('/static/'):]
-                file_path = os.path.join(os.path.dirname(__file__), 'static', rel_path)
-            elif path == '/api/info':
+            clean_path = path.split('?')[0]
+            if clean_path in ('/', '/index.html'):
+                candidates = [
+                    os.path.join(os.path.dirname(__file__), 'index.html'),
+                    os.path.join(os.path.dirname(__file__), 'static', 'index.html')
+                ]
+            elif clean_path == '/api/info':
                 # Quick JSON status endpoint
                 info = json.dumps({
                     "status": "online",
@@ -232,10 +233,21 @@ class LANChatServer:
                 client_socket.close()
                 return
             else:
-                rel_path = path.lstrip('/')
-                file_path = os.path.join(os.path.dirname(__file__), 'static', rel_path)
+                rel = clean_path.lstrip('/')
+                rel_no_static = rel[len('static/'):] if rel.startswith('static/') else rel
+                candidates = [
+                    os.path.join(os.path.dirname(__file__), rel),
+                    os.path.join(os.path.dirname(__file__), 'static', rel_no_static),
+                    os.path.join(os.path.dirname(__file__), 'static', rel)
+                ]
 
-            if os.path.exists(file_path) and os.path.isfile(file_path):
+            file_path = None
+            for c in candidates:
+                if os.path.exists(c) and os.path.isfile(c):
+                    file_path = c
+                    break
+
+            if file_path:
                 content_type, _ = mimetypes.guess_type(file_path)
                 if not content_type:
                     content_type = 'application/octet-stream'
@@ -249,6 +261,7 @@ class LANChatServer:
                     "HTTP/1.1 200 OK\r\n"
                     f"Content-Type: {content_type}\r\n"
                     f"Content-Length: {len(content)}\r\n"
+                    "Access-Control-Allow-Origin: *\r\n"
                     "Connection: close\r\n\r\n"
                 )
                 client_socket.sendall(header.encode('utf-8') + content)

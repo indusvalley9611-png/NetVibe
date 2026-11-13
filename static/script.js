@@ -71,8 +71,16 @@ function getAvatarColor(name) {
 
 // Initialize IP inputs on page load
 window.addEventListener('DOMContentLoaded', () => {
-  const detectedHost = window.location.hostname || "127.0.0.1";
-  const detectedPort = window.location.port || "5000";
+  const isVercel = window.location.hostname.includes('vercel.app');
+  let detectedHost = window.location.hostname || "127.0.0.1";
+  let detectedPort = window.location.port || "5000";
+
+  // If on Vercel or external host without port, suggest local/tunnel IP
+  if (isVercel || (!window.location.port && detectedHost !== 'localhost' && detectedHost !== '127.0.0.1')) {
+    detectedHost = "127.0.0.1";
+    detectedPort = "5000";
+    showLoginNotice("Running on Vercel: Enter your server computer's LAN IPv4 (e.g. 192.168.x.x) or localtunnel/ngrok URL.");
+  }
 
   const hostInput = document.getElementById('server-ip-input');
   const portInput = document.getElementById('server-port-input');
@@ -88,6 +96,17 @@ window.addEventListener('DOMContentLoaded', () => {
     userInput.placeholder = `e.g. ${randomName}`;
   }
 });
+
+function showLoginNotice(msg) {
+  const errorBanner = document.getElementById('login-error');
+  if (errorBanner) {
+    errorBanner.textContent = msg;
+    errorBanner.style.background = "rgba(99, 102, 241, 0.2)";
+    errorBanner.style.borderColor = "rgba(99, 102, 241, 0.4)";
+    errorBanner.style.color = "#c7d2fe";
+    errorBanner.classList.remove('hidden');
+  }
+}
 
 // ========================================================
 // 1. JOIN & CONNECTION LOGIC

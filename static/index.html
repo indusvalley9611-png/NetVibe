@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetVibe - LAN Real-Time Chat</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Ambient Background Gradients -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- ======================================================== -->
+  <!-- 1. LOGIN / JOIN SCREEN -->
+  <!-- ======================================================== -->
+  <div id="login-screen" class="screen-view active">
+    <div class="login-card glass-panel">
+      <div class="brand-header">
+        <div class="brand-icon-wrapper">
+          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          <span class="pulse-ring"></span>
+        </div>
+        <h1 class="brand-title">NetVibe</h1>
+        <p class="brand-subtitle">LAN Real-Time Chat Application</p>
+        <span class="project-tag">Computer Networks Lab • TCP/IP Socket Programming</span>
+      </div>
+
+      <form id="login-form" class="login-form" onsubmit="event.preventDefault(); joinChat();">
+        <div class="form-group">
+          <label for="username-input">Enter Username</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <input type="text" id="username-input" placeholder="e.g. Alex, Rahul, Priya" maxlength="20" required autofocus>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="server-ip-input">Server IPv4</label>
+            <input type="text" id="server-ip-input" placeholder="e.g. 192.168.1.X" required>
+          </div>
+          <div class="form-group">
+            <label for="server-port-input">TCP Port</label>
+            <input type="number" id="server-port-input" value="5000" min="1024" max="65535" required>
+          </div>
+        </div>
+
+        <div id="login-error" class="error-banner hidden"></div>
+
+        <button type="submit" id="join-btn" class="btn btn-primary btn-block">
+          <span class="btn-text">Connect & Join Room</span>
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <div class="concept-badges">
+          <span class="badge">📡 LAN Socket</span>
+          <span class="badge">⚡ TCP Port 5000</span>
+          <span class="badge">🧵 Multithreading</span>
+        </div>
+        <p class="lan-note">Make sure your device is connected to the same Wi-Fi / Local Area Network as the server.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 2. MAIN CHAT DASHBOARD -->
+  <!-- ======================================================== -->
+  <div id="chat-screen" class="screen-view">
+    <div class="chat-layout glass-panel">
+      
+      <!-- SIDEBAR: Users & Connection Info -->
+      <aside class="chat-sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-brand">
+            <div class="mini-logo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2>NetVibe LAN</h2>
+              <span class="network-badge">Local Area Network</span>
+            </div>
+          </div>
+          <button class="icon-btn mobile-close-btn" onclick="toggleSidebar()" title="Close Sidebar">✕</button>
+        </div>
+
+        <!-- Connection Details Card -->
+        <div class="connection-card">
+          <div class="connection-status">
+            <span class="status-indicator online" id="status-dot"></span>
+            <span class="status-text" id="status-label">Connected</span>
+          </div>
+          <div class="connection-details">
+            <div class="detail-item">
+              <span class="detail-label">Server IP:</span>
+              <span class="detail-val" id="disp-server-ip">--</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">TCP Port:</span>
+              <span class="detail-val" id="disp-server-port">5000</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Protocol:</span>
+              <span class="detail-val">TCP / WebSocket</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Online Users Panel -->
+        <div class="users-section">
+          <div class="section-title-row">
+            <h3>Active Users</h3>
+            <span class="user-count-badge" id="online-count">0</span>
+          </div>
+          <div class="users-list" id="users-list">
+            <!-- Dynamically populated with active users -->
+          </div>
+        </div>
+
+        <!-- Current User Profile & Actions -->
+        <div class="sidebar-footer">
+          <div class="my-profile">
+            <div class="avatar" id="my-avatar">U</div>
+            <div class="profile-info">
+              <span class="my-username" id="my-username-disp">User</span>
+              <span class="my-role">Host Client</span>
+            </div>
+          </div>
+          <button class="icon-btn leave-btn" onclick="leaveChat()" title="Disconnect & Exit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </div>
+      </aside>
+
+      <!-- MAIN CHAT AREA -->
+      <main class="chat-main">
+        <!-- Top Chat Header -->
+        <header class="chat-header">
+          <div class="header-left">
+            <button class="icon-btn mobile-menu-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div class="room-info">
+              <h2>🌐 General LAN Room</h2>
+              <p id="chat-subtitle">Real-time peer-to-peer broadcast via Central Socket Server</p>
+            </div>
+          </div>
+          <div class="header-right">
+            <div class="header-badge" id="header-conn-badge">
+              <span class="pulse-dot"></span>
+              <span>TCP Socket Active</span>
+            </div>
+          </div>
+        </header>
+
+        <!-- Message Bubbles Container -->
+        <div class="messages-container" id="messages-container">
+          <div class="welcome-banner">
+            <div class="banner-icon">💬</div>
+            <h3>Welcome to NetVibe LAN Chat!</h3>
+            <p>Messages exchanged here are transmitted via raw TCP packets on port 5000 across your local Wi-Fi network.</p>
+          </div>
+          <!-- Message elements inserted dynamically -->
+        </div>
+
+        <!-- Quick Emoji Reaction Bar -->
+        <div class="quick-reactions">
+          <button type="button" class="reaction-chip" onclick="insertEmoji('👋')">👋</button>
+          <button type="button" class="reaction-chip" onclick="insertEmoji('👍')">👍</button>
+          <button type="button" class="reaction-chip" onclick="insertEmoji('🔥')">🔥</button>
+          <button type="button" class="reaction-chip" onclick="insertEmoji('🚀')">🚀</button>
+          <button type="button" class="reaction-chip" onclick="insertEmoji('💻')">💻</button>
+          <button type="button" class="reaction-chip" onclick="insertEmoji('❤️')">❤️</button>
+          <button type="button" class="reaction-chip" onclick="insertEmoji('🎉')">🎉</button>
+        </div>
+
+        <!-- Message Input Bar -->
+        <footer class="chat-input-bar">
+          <form id="message-form" class="message-form" onsubmit="event.preventDefault(); sendMessage();">
+            <input 
+              type="text" 
+              id="message-input" 
+              placeholder="Type your message here... (Press Enter to send)" 
+              autocomplete="off" 
+              required
+            >
+            <button type="submit" id="send-btn" class="send-btn" title="Send Message">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+              </svg>
+            </button>
+          </form>
+        </footer>
+      </main>
+
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
